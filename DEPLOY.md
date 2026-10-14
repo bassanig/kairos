@@ -49,7 +49,7 @@ corepack pnpm exec wrangler secret put ADMIN_KEY --config wrangler.cloudflare.js
 
 Choose a unique, hard-to-guess passphrase of 16–256 characters and save it in your password manager. Do not put the key in a command argument, this document, `wrangler.cloudflare.jsonc`, Git or browser storage. Spaces are significant. If Wrangler asks to create the Worker before the first deploy, accept that creation.
 
-The site does not have public first-user setup. `/owner` accepts only the key you configured in Cloudflare. Successful login issues a signed Secure/HttpOnly cookie valid for 30 days; the key itself is not in that cookie. Guests still use separate generated room passwords. The owner key grants full owner access to the deployment's single owner agenda.
+The main page opens rooms by a chosen code: an existing code loads its saved agenda, and a new code creates an empty room. Codes are case-sensitive and surrounding whitespace is ignored. Anyone holding a code can edit that room and manage its AI API key; this flow does not require ADMIN_KEY. Existing generated room passwords continue to work. `/owner` accepts only the key you configured in Cloudflare. Successful login issues a signed Secure/HttpOnly cookie valid for 30 days; the key itself is not in that cookie. Guests still use separate generated room passwords. The owner key grants full owner access to the deployment's single owner agenda.
 
 To rotate or recover the key, run the same secret command and enter a new key. Rotation invalidates previous owner sessions and preserves room data. `/owner` also has a button to sign out the owner session on the current device. Room sessions are separate.
 
@@ -65,7 +65,7 @@ corepack pnpm deploy
 
 The deploy preflight rejects the placeholder database ID. A dry run bundles the Worker without publishing it. Neither command verifies that the secret has been configured; `/api/owner` refuses login with HTTP 503 if the owner key is missing or too short.
 
-Wrangler prints `https://kairos.<your-subdomain>.workers.dev`. Open `/owner`, enter your key, then open **Sala e acesso → Ativar minha sala** to generate a separate guest password. Generate an AI key if you want external API access.
+Wrangler prints `https://kairos.<your-subdomain>.workers.dev`. Open the main page and enter a room code to create or load a room. For the separate legacy owner agenda, open `/owner`, enter your key, then open **Sala e acesso → Ativar minha sala** to generate a separate guest password. Generate an AI key if you want external API access.
 
 After publication, verify owner login, save/reload a task, guest editing in a separate browser, API token access and revision conflicts. Check Worker logs and CPU metrics to confirm the Free plan handles actual SSR and API workloads.
 

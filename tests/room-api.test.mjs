@@ -22,7 +22,7 @@ test('Room authentication, isolated API access, revision conflicts and revocatio
  const created=await (await room.POST(req('/api/room',{action:'create'}))).json();assert.match(created.password,/^[a-f0-9]{48}$/);assert.notEqual(rows.rooms[0].passwordHash,created.password);
  const token=await (await room.POST(req('/api/room',{action:'token'}))).json();
  user=null;
- assert.equal((await room.POST(req('/api/room',{action:'join',password:'wrong'}))).status,401);
+ assert.equal((await room.POST(req('/api/room',{action:'join',password:''}))).status,400);
  const joined=await room.POST(req('/api/room',{action:'join',password:created.password}));assert.equal(joined.status,200);assert.match(joined.headers.get('set-cookie'),/HttpOnly; Secure; SameSite=Strict/);
  const cookie={'Cookie':auth.cookieName+'='+created.password};assert.equal((await auth.access(req('/',undefined,cookie))).owner,'owner-a');
  const bearer={Authorization:'Bearer '+token.token};assert.equal((await auth.access(req('/',undefined,bearer))).owner,'owner-a');
@@ -38,4 +38,44 @@ test('Room authentication, isolated API access, revision conflicts and revocatio
  await room.POST(req('/api/room',{action:'password'}));user=null;assert.equal(await auth.access(req('/',undefined,cookie)),null);
  assert.equal((await auth.access(req('/',undefined,bearer))).owner,'owner-a');
  user={userId:'owner-a'};await room.POST(req('/api/room',{action:'revoke'}));user=null;assert.equal(await auth.access(req('/',undefined,bearer)),null);
+});
+
+test('Chosen codes create once, persist data and isolate rooms',async()=>{
+ user=null;
+ const code='minha sala; caf?=2026';
+ const joined=await room.POST(req('/api/room',{action:'join',password:code}));
+ assert.equal(joined.status,200);
+ const cookie={Cookie:joined.headers.get('set-cookie').split(';')[0]};
+ const selected=await auth.access(req('/',undefined,cookie));
+ assert.ok(selected.owner.startsWith('code:'));
+ assert.equal((await (await api.GET(req('/api/planner',undefined,cookie))).json()).state,null);
+ const state=planner.initial('2026-10-12');
+ state.tasks.push({id:'task-code',series:'series-code',column:state.columns[1].id,row:0,span:1,title:'Persistida',description:'',color:'blue',done:false});
+ assert.equal((await api.PUT(req('/api/planner',{state,revision:0},cookie))).status,200);
+ const count=rows.rooms.length;
+ await Promise.all([room.POST(req('/api/room',{action:'join',password:code})),room.POST(req('/api/room',{action:'join',password:code}))]);
+ assert.equal(rows.rooms.length,count);
+ assert.deepEqual((await (await api.GET(req('/api/planner',undefined,cookie))).json()).state,state);
+ const other=await room.POST(req('/api/room',{action:'join',password:'outra-sala'}));
+ const otherCookie={Cookie:other.headers.get('set-cookie').split(';')[0]};
+ assert.equal((await (await api.GET(req('/api/planner',undefined,otherCookie))).json()).state,null);
+ assert.notEqual((await auth.access(req('/',undefined,otherCookie))).owner,selected.owner);
+ assert.equal((await (await room.GET(req('/api/room',undefined,cookie))).json()).codeRoom,true);
+ const issued=await (await room.POST(req('/api/room',{action:'token'},cookie))).json();
+ assert.equal((await auth.access(req('/',undefined,{Authorization:'Bearer '+issued.token}))).owner,selected.owner);
+ await room.POST(req('/api/room',{action:'revoke'},cookie));
+ assert.equal(await auth.access(req('/',undefined,{Authorization:'Bearer '+issued.token})),null);
+ assert.equal((await room.POST(req('/api/room',{action:'join',password:'x'.repeat(129)}))).status,400);
+ assert.equal(await auth.access(req('/',undefined,{Cookie:auth.cookieName+'=%ZZ'})),null);
+});
+
+test('Simultaneous first access shares one room; code case stays distinct',async()=>{
+ user=null;
+ const code='Concurrent-Room';const before=rows.rooms.length;
+ const responses=await Promise.all([room.POST(req('/api/room',{action:'join',password:code})),room.POST(req('/api/room',{action:'join',password:code}))]);
+ assert.equal(rows.rooms.length,before+1);
+ const sessions=await Promise.all(responses.map(r=>auth.access(req('/',undefined,{Cookie:r.headers.get('set-cookie').split(';')[0]}))));
+ assert.equal(sessions[0].owner,sessions[1].owner);
+ const different=await room.POST(req('/api/room',{action:'join',password:code.toLowerCase()}));
+ assert.notEqual((await auth.access(req('/',undefined,{Cookie:different.headers.get('set-cookie').split(';')[0]}))).owner,sessions[0].owner);
 });
