@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "kairos",
+  "main": "./cloudflare/worker.ts",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "AUTH_MODE": "standalone",
+    "ADMIN_OWNER_ID": "kairos-owner"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kairos-db",
+      // Replace with the ID returned by `pnpm exec wrangler d1 create kairos-db`.
+      "database_id": "00000000-0000-4000-8000-000000000000",
+      "migrations_dir": "./drizzle"
+    }
+  ]
+}
