@@ -93,4 +93,4 @@ Deploying with Wrangler does not need a Git repository. For Git-based Cloudflare
 
 Provision the database, secret and migrations separately first. Commit the real D1 `database_id` in `wrangler.cloudflare.jsonc` before retrying the build.
 
-Do not use `pnpm build` for this standalone deployment: it builds the Sites preview configuration from `vite.config.ts`, including the fictitious `site-creator-d1` database. If deployment fails with error 10181 referencing `00000000-0000-4000-8000-000000000000`, check both the build command and the production database ID. The production preflight stops this mistake before uploading assets.
+`pnpm build` now runs the production preflight and Cloudflare build, so the default Cloudflare Builds command also uses the production database. The previous Sites preview build remains available as `pnpm build:sites` and must not be used for standalone deployment. If deployment fails with error 10181 referencing `00000000-0000-4000-8000-000000000000`, check both the build command and the production database ID. The production preflight stops this mistake before uploading assets.
