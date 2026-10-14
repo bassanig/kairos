@@ -15,13 +15,13 @@
     "deploy:dry-run": "pnpm deploy:check && pnpm build:cloudflare && wrangler deploy --config dist/server/wrangler.json --dry-run",
     "deploy:check": "node scripts/check-cloudflare.mjs",
     "test": "node --experimental-strip-types --test tests/planner.test.ts tests/owner-auth.test.ts tests/room-api.test.mjs tests/owner-api.test.mjs",
-    "db:migrate:remote": "wrangler d1 migrations apply kairos-db --remote --config wrangler.cloudflare.jsonc",
+    "db:migrate:remote": "wrangler d1 migrations apply kairos --remote --config wrangler.cloudflare.jsonc",
     "build:cloudflare": "vite build --config vite.cloudflare.config.ts",
     "typecheck": "tsc --noEmit",
     "dev:cloudflare": "vite --config vite.cloudflare.config.ts",
     "preview:cloudflare": "wrangler dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
     "deploy": "pnpm deploy:check && pnpm build:cloudflare && wrangler deploy --config dist/server/wrangler.json",
-    "db:migrate:local": "wrangler d1 migrations apply kairos-db --local --config wrangler.cloudflare.jsonc"
+    "db:migrate:local": "wrangler d1 migrations apply kairos --local --config wrangler.cloudflare.jsonc"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

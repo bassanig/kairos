@@ -13,9 +13,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "kairos-db",
-      // Replace with the ID returned by `pnpm exec wrangler d1 create kairos-db`.
-      "database_id": "00000000-0000-4000-8000-000000000000",
+      "database_name": "kairos",
+      "database_id": "ac940b7d-1ab5-464f-9344-75bc218fbc8f",
       "migrations_dir": "./drizzle"
     }
   ]

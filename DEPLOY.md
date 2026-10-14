@@ -32,7 +32,7 @@ Create a Cloudflare account and keep Workers on the Free plan. Then:
 
 ```powershell
 corepack pnpm exec wrangler login
-corepack pnpm exec wrangler d1 create kairos-db
+corepack pnpm exec wrangler d1 create kairos
 ```
 
 Copy the returned `database_id` into `wrangler.cloudflare.jsonc`, replacing the placeholder. Keep binding `DB` and migrations directory `./drizzle`. Choose an available Worker name if `kairos` is already used in your account.
@@ -84,4 +84,13 @@ For a built production preview, run `corepack pnpm build:cloudflare` then `corep
 
 ## Repository setup
 
-This checkout currently inherits a Git repository rooted above the app directory. Deploying with Wrangler does not need a Git repository. Before enabling Git-based Cloudflare Builds, put **only this app directory** in its own repository and inspect the files to be committed. Use `corepack pnpm build:cloudflare` as the build command and `corepack pnpm exec wrangler deploy --config dist/server/wrangler.json` as the deploy command; provision the database, secret and migrations separately first.
+Deploying with Wrangler does not need a Git repository. For Git-based Cloudflare Builds, use a repository containing this app and set the root directory to the directory containing `package.json`. In the Worker's build settings, use:
+
+| Setting | Command |
+| --- | --- |
+| Build command | `corepack pnpm deploy:check && corepack pnpm build:cloudflare` |
+| Deploy command | `corepack pnpm exec wrangler deploy --config dist/server/wrangler.json` |
+
+Provision the database, secret and migrations separately first. Commit the real D1 `database_id` in `wrangler.cloudflare.jsonc` before retrying the build.
+
+Do not use `pnpm build` for this standalone deployment: it builds the Sites preview configuration from `vite.config.ts`, including the fictitious `site-creator-d1` database. If deployment fails with error 10181 referencing `00000000-0000-4000-8000-000000000000`, check both the build command and the production database ID. The production preflight stops this mistake before uploading assets.
